@@ -7,10 +7,11 @@ import { FiX } from "react-icons/fi";
 export const ButtonSignIn = () => {
   const [session] = useSession()
 
+
   return session ? (
     <button type="button" className={styles.ButtonSignIn} onClick={() => signOut()}>
-      <img src="https://joeschmoe.io/api/v1/random" alt="Foto do usuário" />
-      Olá Monalisa
+      <img src={session.user.image} alt="Foto do usuário" />
+      Olá {session.user.name}
       <FiX color="#737380" className={styles.closeIcon} />
     </button>
   ) : (

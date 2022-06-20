@@ -6,14 +6,16 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
+
+    img {
+      margin-top: 2rem;
+      width: 500px;
+      height: 400px;
+    }
     
 }
 
-.imageBoard {
-  margin-top: 2rem;
-  width: 500px;
-  height: 400px;
-}
+
 
 .callToAction {
   max-width: 700px;
