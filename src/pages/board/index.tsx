@@ -6,17 +6,29 @@ import styles from './styles.module.scss'
 import { FiCalendar, FiClock, FiEdit2, FiPlus, FiTrash } from 'react-icons/fi'
 import { SupportButton } from '../../components/SupportButton'
 import firebase from '../../services/firebaseConnection'
+import { format } from 'date-fns'
+import Link from 'next/link'
+
+type TaskList = {
+  id: string
+  created: string | Date
+  createdFormated?: string
+  tarefa: string
+  userId: string
+  name: string
+}
 
 interface IUser {
   user: {
     name: string
     id: string
   }
+  data: string
 }
 
-const Board = ({ user }: IUser) => {
+const Board = ({ user, data }: IUser) => {
   const [input, setInput] = useState('')
-
+  const [taskList, setTaskList] = useState<TaskList[]>(JSON.parse(data))
   const hadleAddTask = async (e: FormEvent) => {
     e.preventDefault()
 
@@ -35,9 +47,36 @@ const Board = ({ user }: IUser) => {
         name: user.name
       })
       .then(doc => {
-        console.log('Cadastrado com sucesso')
+        let data = {
+          id: doc.id,
+          created: new Date(),
+          createdFormated: format(new Date(), 'dd MMMM yyyy'),
+          tarefa: input,
+          userId: user.id,
+          name: user.name
+        }
+
+        setTaskList([...taskList, data])
+        setInput('')
       })
       .catch(err => console.log('Erro: ' + err))
+  }
+
+  const handleDelete = async (id: string) => {
+    await firebase
+      .firestore()
+      .collection('tarefas')
+      .doc(id)
+      .delete()
+      .then(() => {
+        console.log('Deletado com sucesso')
+        let deleted = taskList.filter(item => {
+          return (item.id !== id)
+        })
+
+        setTaskList(deleted)
+      })
+      .catch((error) => console.log(error))
   }
 
   return (
@@ -59,33 +98,37 @@ const Board = ({ user }: IUser) => {
           </button>
         </form>
 
-        <h1>Você tem 2 tarefas</h1>
+        <h1>
+          Você tem {taskList.length}{' '}
+          {taskList.length === 1 ? 'Tarefa' : 'Tarefas'}!
+        </h1>
 
         <section>
-          <article className={styles.taskList}>
-            <p>
-              Aprender criar projetos usando Next JS e aplicando firebase como
-              back.
-            </p>
-            <div className={styles.actions}>
-              <div>
+          {taskList.map(task => (
+            <article key={task.id} className={styles.taskList}>
+              <Link href={`/task/${task.id}`}>
+                <p>{task.tarefa}</p>
+              </Link>
+              <div className={styles.actions}>
                 <div>
-                  <FiCalendar size={20} color='#ffbb00' />
-                  <time>16 de junho de 2022</time>
+                  <div>
+                    <FiCalendar size={20} color='#ffbb00' />
+                    <time>{task.createdFormated}</time>
+                  </div>
+
+                  <button>
+                    <FiEdit2 size={20} color='#fff' />
+                    <span>Editar</span>
+                  </button>
                 </div>
 
-                <button>
-                  <FiEdit2 size={20} color='#fff' />
-                  <span>Editar</span>
+                <button onClick={() => handleDelete(task.id)}>
+                  <FiTrash size={20} color='#ff3636' />
+                  <span>Excluir</span>
                 </button>
               </div>
-
-              <button>
-                <FiTrash size={20} color='#ff3636' />
-                <span>Excluir</span>
-              </button>
-            </div>
-          </article>
+            </article>
+          ))}
         </section>
       </main>
 
@@ -104,28 +147,44 @@ const Board = ({ user }: IUser) => {
 export default Board
 
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {
-  const session = await getSession({ req });
+  const session = await getSession({ req })
 
-  if(!session?.id){
+  if (!session?.id) {
     //Se o user nao tiver logado vamos redirecionar.
-    return{
-      redirect:{
+    return {
+      redirect: {
         destination: '/',
         permanent: false
       }
     }
   }
 
+  const tasks = await firebase
+    .firestore()
+    .collection('tarefas')
+    .where('userId', '==', session?.id)
+    .orderBy('created', 'asc')
+    .get()
+
+  const data = JSON.stringify(
+    tasks.docs.map(item => {
+      return {
+        id: item.id,
+        createdFormated: format(item.data().created.toDate(), 'dd MMMM yyyy'),
+        ...item.data()
+      }
+    })
+  )
+
   const user = {
     name: session?.user.name,
     id: session?.id
   }
 
-
-  return{
-    props:{
-      user
+  return {
+    props: {
+      user,
+      data
     }
   }
-
 }
