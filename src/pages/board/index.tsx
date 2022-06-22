@@ -3,7 +3,14 @@ import Head from 'next/head'
 import { getSession } from 'next-auth/client'
 import { GetServerSideProps } from 'next'
 import styles from './styles.module.scss'
-import { FiCalendar, FiClock, FiEdit2, FiPlus, FiTrash } from 'react-icons/fi'
+import {
+  FiCalendar,
+  FiClock,
+  FiEdit2,
+  FiPlus,
+  FiTrash,
+  FiX
+} from 'react-icons/fi'
 import { SupportButton } from '../../components/SupportButton'
 import firebase from '../../services/firebaseConnection'
 import { format } from 'date-fns'
@@ -29,12 +36,34 @@ interface IUser {
 const Board = ({ user, data }: IUser) => {
   const [input, setInput] = useState('')
   const [taskList, setTaskList] = useState<TaskList[]>(JSON.parse(data))
+  const [taskEdit, setTaskEdit] = useState<TaskList | null>(null)
+
   const hadleAddTask = async (e: FormEvent) => {
     e.preventDefault()
 
     if (input === '') {
       alert('preencha alguma tarefa')
       return
+    }
+
+    if (taskEdit) {
+      await firebase
+        .firestore()
+        .collection('tarefas')
+        .doc(taskEdit.id)
+        .update({
+          tarefa: input
+        })
+        .then(() => {
+            let data = taskList
+            let taskIndex = taskList.findIndex(item => item.id === taskEdit.id)
+            data[taskIndex].tarefa = input
+            setTaskList(data)
+            setTaskEdit(null)
+            setInput('')
+        })
+
+        return
     }
 
     await firebase
@@ -71,12 +100,22 @@ const Board = ({ user, data }: IUser) => {
       .then(() => {
         console.log('Deletado com sucesso')
         let deleted = taskList.filter(item => {
-          return (item.id !== id)
+          return item.id !== id
         })
 
         setTaskList(deleted)
       })
-      .catch((error) => console.log(error))
+      .catch(error => console.log(error))
+  }
+
+  const handleEditTask = (task: TaskList) => {
+    setTaskEdit(task)
+    setInput(task.tarefa)
+  }
+
+  const handleCancelEdit = () => {
+    setInput('')
+    setTaskEdit(null)
   }
 
   return (
@@ -86,6 +125,15 @@ const Board = ({ user, data }: IUser) => {
       </Head>
 
       <main className={styles.container}>
+        {taskEdit && (
+          <span className={styles.warnText}>
+            <button onClick={handleCancelEdit}>
+              <FiX size={30} color='#FF3636' />
+            </button>
+            Você está editando uma tarefa
+          </span>
+        )}
+
         <form onSubmit={hadleAddTask}>
           <input
             type='text'
@@ -116,7 +164,7 @@ const Board = ({ user, data }: IUser) => {
                     <time>{task.createdFormated}</time>
                   </div>
 
-                  <button>
+                  <button onClick={() => handleEditTask(task)}>
                     <FiEdit2 size={20} color='#fff' />
                     <span>Editar</span>
                   </button>
