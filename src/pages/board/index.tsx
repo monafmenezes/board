@@ -154,7 +154,7 @@ const Board = ({ user, data }: IUser) => {
         <section>
           {taskList.map(task => (
             <article key={task.id} className={styles.taskList}>
-              <Link href={`/task/${task.id}`}>
+              <Link href={`/board/${task.id}`}>
                 <p>{task.tarefa}</p>
               </Link>
               <div className={styles.actions}>
