@@ -9,13 +9,15 @@ export const Header = () => {
     <header className={styles.headerContainer}>
       <div className={styles.headerContent}>
         <Link href='/'>
-          <Image
-            className={styles.headerImage}
-            src={Logo}
-            alt='Logo Meu Board'
-            width={56}
-            height={56}
-          />
+          <a>
+            <Image
+              className={styles.headerImage}
+              src={Logo}
+              alt='Logo Meu Board'
+              width={56}
+              height={56}
+            />
+          </a>
         </Link>
 
         <nav>

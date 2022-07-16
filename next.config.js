@@ -9,6 +9,6 @@ module.exports = {
     ignoreBuildErrors: true
   },
   images: {
-    domains: ['joeschmoe.io/']
+    domains: ['avatars.githubusercontent.com']
   }
 }

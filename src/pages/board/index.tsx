@@ -13,7 +13,8 @@ import {
 } from 'react-icons/fi'
 import { SupportButton } from '../../components/SupportButton'
 import firebase from '../../services/firebaseConnection'
-import { format } from 'date-fns'
+import { format, formatDistance } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import Link from 'next/link'
 
 type TaskList = {
@@ -27,8 +28,10 @@ type TaskList = {
 
 interface IUser {
   user: {
-    name: string
-    id: string
+    name: string;
+    id: string;
+    vip: boolean;
+    lastDonate: string | Date;
   }
   data: string
 }
@@ -164,10 +167,14 @@ const Board = ({ user, data }: IUser) => {
                     <time>{task.createdFormated}</time>
                   </div>
 
-                  <button onClick={() => handleEditTask(task)}>
-                    <FiEdit2 size={20} color='#fff' />
-                    <span>Editar</span>
-                  </button>
+                  {user.vip && (
+                    <button onClick={() => handleEditTask(task)}>
+                      <FiEdit2 size={20} color='#fff' />
+                      {user.vip && (
+                        <span>Editar</span>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 <button onClick={() => handleDelete(task.id)}>
@@ -180,13 +187,15 @@ const Board = ({ user, data }: IUser) => {
         </section>
       </main>
 
-      <div className={styles.vipContainer}>
+      {user.vip && (
+        <div className={styles.vipContainer}>
         <h3>Obrigado por apoioar esse projeto.</h3>
         <div>
           <FiClock size={28} color='#fff' />
-          <time>Útima doação foi a 3 dias</time>
+          <time>Útima doação foi a { formatDistance(new Date(user.lastDonate), new Date(), {locale: ptBR}) }</time>
         </div>
       </div>
+      )}
       <SupportButton />
     </>
   )
@@ -224,9 +233,12 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
     })
   )
 
+
   const user = {
     name: session?.user.name,
-    id: session?.id
+    id: session?.id,
+    vip: session?.vip,
+    lastDonate: session?.lastDonate,
   }
 
   return {

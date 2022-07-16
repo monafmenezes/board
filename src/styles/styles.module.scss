@@ -6,11 +6,17 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    min-height: calc(100vh - 8rem);
 
     img {
       margin-top: 2rem;
       width: 500px;
       height: 400px;
+    }
+
+    h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
     }
     
 }
@@ -62,7 +68,7 @@
   }
 
   img:hover {
-    transform: scale(1.2);
+    // transform: scale(1.2);
   }
 
  

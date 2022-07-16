@@ -2,11 +2,15 @@ import { GetServerSideProps } from 'next'
 import { getSession } from 'next-auth/client'
 import firebase from '../../services/firebaseConnection'
 import { format} from 'date-fns'
+import styles from './task.module.scss'
+import Head from 'next/head'
+import {FiCalendar} from 'react-icons/fi'
+
 
 type Task = {
   id: string
   created: string | Date
-  createdFormated?: string
+  creatadeFormater?: string
   tarefa: string
   userId: string
   nome: string
@@ -21,10 +25,21 @@ const Task = ({data}: TaskListProps) => {
   const task = JSON.parse(data) as Task
 
   return (
-    <div>
-      <h1>Página detalhes</h1>
-      <h2>{task.tarefa}</h2>
-    </div>
+   <>
+      <Head>
+        <title>Detalhes da sua tarefa</title>
+      </Head>
+      <article className={styles.container}>
+        <div className={styles.actions}>
+          <div>
+            <FiCalendar size={30} color="#FFF"/>
+            <span>Tarefa criada:</span>
+            <time>{task.creatadeFormater}</time>
+          </div>
+        </div>
+        <p>{task.tarefa}</p>
+      </article>
+   </>
   )
 }
 
@@ -35,7 +50,7 @@ export const getServerSideProps: GetServerSideProps = async ({
   const { id } = params
   const session = await getSession({ req })
 
-  if (!session?.id) {
+  if (!session?.vip) {
     return {
       redirect: {
         destination: '/board',
@@ -60,7 +75,20 @@ export const getServerSideProps: GetServerSideProps = async ({
       }
 
       return JSON.stringify(data)
+
     })
+    .catch(() => {
+      return {};
+    })
+
+    if (Object.keys(data).length === 0) {
+      return {
+        redirect: {
+          destination: '/board',
+          permanent: false
+        }
+      }
+    }
 
   return {
     props: {
